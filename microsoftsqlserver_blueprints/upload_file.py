@@ -110,9 +110,28 @@ def combine_folder_and_file_name(folder_name, file_name):
 
 
 def upload_data(source_full_path, table_name, insert_method, db_connection):
-    for chunk in pd.read_csv(source_full_path, chunksize=10000):
-        chunk.to_sql(table_name, con=db_connection, index=False,
-                     if_exists=insert_method, method='multi', chunksize=1000)
+    # Resort to chunks for larger files to avoid memory issues.
+    for index, chunk in enumerate(
+            pd.read_csv(source_full_path, chunksize=10000)):
+
+        if insert_method == 'replace' and index > 0:
+            # First chunk replaces the table, the following chunks
+            # append to the end.
+            chunk.to_sql(
+                table_name,
+                con=db_connection,
+                index=False,
+                if_exists='append',
+                method='multi',
+                chunksize=10000)
+        else:
+            chunk.to_sql(
+                table_name,
+                con=db_connection,
+                index=False,
+                if_exists=insert_method,
+                method='multi',
+                chunksize=10000)
     print(f'{source_full_path} successfully uploaded to {table_name}.')
 
 
