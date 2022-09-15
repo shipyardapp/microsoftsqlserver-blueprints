@@ -124,7 +124,12 @@ def combine_folder_and_file_name(folder_name, file_name):
     return combined_name
 
 
-def upload_data(source_full_path, table_name, insert_method, db_connection):
+def upload_data(
+        source_full_path,
+        table_name,
+        insert_method,
+        db_connection,
+        args):
     # Resort to chunks for larger files to avoid memory issues.
     for index, chunk in enumerate(
             pd.read_csv(source_full_path, chunksize=1000)):
@@ -133,14 +138,22 @@ def upload_data(source_full_path, table_name, insert_method, db_connection):
             # First chunk replaces the table, the following chunks
             # append to the end.
             insert_method = 'append'
-
-        chunk.to_sql(
-            table_name,
-            con=db_connection,
-            index=False,
-            if_exists=insert_method,
-            method='multi',
-            chunksize=1000)
+        if args.connect_with == 'pymssql':
+            chunk.to_sql(
+                table_name,
+                con=db_connection,
+                index=False,
+                if_exists=insert_method,
+                method='multi',
+                chunksize=1000)
+        if args.connect_with == 'pyodbc':
+            chunk.to_sql(
+                table_name,
+                con=db_connection,
+                index=False,
+                if_exists=insert_method,
+                method=None,
+                chunksize=1000)
     print(f'{source_full_path} successfully uploaded to {table_name}.')
 
 
@@ -156,7 +169,10 @@ def main():
 
     db_string = create_connection_string(args)
     try:
-        db_connection = create_engine(db_string)
+        if args.connect_with == 'pymssql':
+            db_connection = create_engine(db_string)
+        if args.connect_with == 'pyodbc':
+            db_connection = create_engine(db_string, fast_executemany=True)
     except Exception as e:
         print(f'Failed to connect to database {args.database}')
         raise (e)
@@ -172,11 +188,16 @@ def main():
                 source_full_path=key_name,
                 table_name=table_name,
                 insert_method=insert_method,
-                db_connection=db_connection)
+                db_connection=db_connection,
+                args=args)
 
     else:
-        upload_data(source_full_path=source_full_path, table_name=table_name,
-                    insert_method=insert_method, db_connection=db_connection)
+        upload_data(
+            source_full_path=source_full_path,
+            table_name=table_name,
+            insert_method=insert_method,
+            db_connection=db_connection,
+            args=args)
 
     db_connection.dispose()
 
