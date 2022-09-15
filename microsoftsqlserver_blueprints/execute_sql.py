@@ -18,6 +18,15 @@ def get_args():
         '--db-connection-url',
         dest='db_connection_url',
         required=False)
+    parser.add_argument(
+        '--connect-with',
+        dest='connect_with',
+        choices={
+            'pymssql',
+            'pyodbc'}
+        required=False,
+        default='pymssql'
+    )
     args = parser.parse_args()
 
     if not args.db_connection_url and not (
@@ -44,10 +53,16 @@ def create_connection_string(args):
     Set the database connection string as an environment variable using the keyword arguments provided.
     This will override system defaults.
     """
-    if args.db_connection_url:
-        os.environ['DB_CONNECTION_URL'] = args.db_connection_url
-    elif (args.host and args.username and args.database):
-        os.environ['DB_CONNECTION_URL'] = f'mssql+pymssql://{args.username}:{args.password}@{args.host}:{args.port}/{args.database}?{args.url_parameters}'
+    if args.connect_with == 'pymssql':
+        if args.db_connection_url:
+            os.environ['DB_CONNECTION_URL'] = args.db_connection_url
+        elif (args.host and args.username and args.database):
+            os.environ['DB_CONNECTION_URL'] = f'mssql+pymssql://{args.username}:{args.password}@{args.host}:{args.port}/{args.database}?{args.url_parameters}'
+    if args.connect_with == 'pyodbc':
+        if args.db_connection_url:
+            os.environ['DB_CONNECTION_URL'] = args.db_connection_url
+        elif (args.host and args.username and args.database):
+            os.environ['DB_CONNECTION_URL'] = f'mssql+pyodbc://{args.username}:{args.password}@{args.host}:{args.port}/{args.database}?driver=ODBC+Driver+17+for+SQL+Server&{args.url_parameters}'
 
     db_string = os.environ.get('DB_CONNECTION_URL')
     return db_string
@@ -62,7 +77,7 @@ def main():
         db_connection = create_engine(db_string)
     except Exception as e:
         print(f'Failed to connect to database {args.database}')
-        raise(e)
+        raise (e)
 
     db_connection.execute(query)
     print('Your query has been successfully executed.')
