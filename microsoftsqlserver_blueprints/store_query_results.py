@@ -35,7 +35,7 @@ def get_args():
         dest='connect_with',
         choices={
             'pymssql',
-            'pyodbc'}
+            'pyodbc'},
         required=False,
         default='pymssql'
     )
