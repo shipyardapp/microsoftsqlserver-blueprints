@@ -125,7 +125,7 @@ def upload_data(source_full_path, table_name, insert_method, db_connection):
             index=False,
             if_exists=insert_method,
             method='multi',
-            chunksize=10000)
+            chunksize=1000)
     print(f'{source_full_path} successfully uploaded to {table_name}.')
 
 
