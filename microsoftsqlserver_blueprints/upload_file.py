@@ -4,6 +4,8 @@ import os
 import glob
 import re
 import pandas as pd
+import pypyodbc
+# import pyodbc
 
 
 def get_args():
@@ -66,14 +68,23 @@ def create_connection_string(args):
     """
     Set the database connection string as an environment variable using the keyword arguments provided.
     This will override system defaults.
-    """
-    if args.db_connection_url:
-        os.environ['DB_CONNECTION_URL'] = args.db_connection_url
-    elif (args.host and args.username and args.database):
-        os.environ['DB_CONNECTION_URL'] = f'mssql+pymssql://{args.username}:{args.password}@{args.host}:{args.port}/{args.database}?{args.url_parameters}'
+     """
+    # if args.db_connection_url:
+    #     os.environ['DB_CONNECTION_URL'] = args.db_connection_url
+    # elif (args.host and args.username and args.database):
+    #     os.environ['DB_CONNECTION_URL'] = f'mssql+pymssql://{args.username}:{args.password}@{args.host}:{args.port}/{args.database}?{args.url_parameters}'
 
-    db_string = os.environ.get('DB_CONNECTION_URL')
-    return db_string
+    # db_string = os.environ.get('DB_CONNECTION_URL')
+    # return db_string
+    server = args.host
+    user = args.username
+    pwd = args.password
+    port = args.port
+    database = args.database
+    driver_str = 'DRIVER={ODBC Driver 17 for SQL Server};'
+    con_str = f"{driver_str}SERVER={server};DATABASE={database};UID={user};PWD={pwd}"
+    return con_str
+    # pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};SERVER='+server+';DATABASE='+database+';UID='+username+';PWD='+ password)
 
 
 def find_all_local_file_names(source_folder_name):
@@ -138,13 +149,18 @@ def main():
         folder_name=source_folder_name, file_name=source_file_name)
     table_name = args.table_name
     insert_method = args.insert_method
+    # db_connection = pypyodbc.connect(driver = '{SQL Server}', server = args.host,
+    #                                  database = args.database, uid = args.username, pwd = args.password)
 
     db_string = create_connection_string(args)
     try:
-        db_connection = create_engine(db_string)
+        # db_connection = create_engine(db_string)
+        db_connection = pypyodbc.connect(db_string)
     except Exception as e:
         print(f'Failed to connect to database {args.database}')
         raise(e)
+
+    
 
     if source_file_name_match_type == 'regex_match':
         file_names = find_all_local_file_names(source_folder_name)

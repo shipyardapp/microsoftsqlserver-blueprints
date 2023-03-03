@@ -1,5 +1,7 @@
 SQLAlchemy==2.0.4
 # pymssql==2.2.7
 # pymssql --no-binary=pymssql
-pymssql==2.1.1
+# pymssql==2.1.1
+# pypyodbc
+pyodbc
 pandas==1.5.3
