@@ -59,7 +59,6 @@ def create_connection_string(args):
     if args.db_connection_url:
         os.environ['DB_CONNECTION_URL'] = args.db_connection_url
     elif (args.host and args.username and args.database):
-        # os.environ['DB_CONNECTION_URL'] = f'mssql+pymssql://{args.username}:{args.password}@{args.host}:{args.port}/{args.database}?{args.url_parameters}'
         os.environ['DB_CONNECTION_URL'] = f'mssql+pyodbc://{args.username}:{args.password}@{args.host}:{args.port}/{args.database}?driver=ODBC+Driver+17+for+SQL+Server&{args.url_parameters}'
 
 
